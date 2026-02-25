@@ -28,7 +28,7 @@
             text-align: center; width: 240px; display: none; 
         }
 
-        /* PROGRESS BAR STYLE */
+        /* PROGRESS BAR */
         .progress-container { background: #e0e6ed; border-radius: 10px; height: 10px; margin: 10px 0; overflow: hidden; }
         #progress-bar { height: 100%; width: 10%; background: #27ae60; transition: 0.5s; }
 
@@ -141,7 +141,7 @@
                 if (userRole === 'passenger' && userCoords) {
                     const dist = map.distance(userCoords, [data.latitude, data.longitude]);
                     
-                    // GEOFENCING ALERT
+                    // ALERT
                     if (dist < 500 && !alertSent) {
                         alert("🚨 Bus is nearby! (Less than 500m away)");
                         alertSent = true;
@@ -169,4 +169,5 @@
         }
     </script>
 </body>
+
 </html>
