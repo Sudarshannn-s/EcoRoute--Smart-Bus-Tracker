@@ -3,7 +3,7 @@ const app = express();
 const http = require('http').createServer(app);
 const io = require('socket.io')(http);
 
-// Serve your frontend files
+//Frontend files
 app.use(express.static('public'));
 
 // Storage for bus tracking logs
@@ -33,10 +33,10 @@ io.on('connection', (socket) => {
         const now = Date.now();
         const prev = busLogs[socket.id] || { latitude: data.latitude, longitude: data.longitude, timestamp: now };
         
-        // Check if moved significantly (approx 10 meters)
+        // To Check if moved significantly (approx 10 meters)
         const moved = Math.abs(data.latitude - prev.latitude) > 0.0001 || Math.abs(data.longitude - prev.longitude) > 0.0001;
         
-        // Stuck Detection: No movement for 3 minutes
+        // If No movement for 3 minutes
         const isStuck = !moved && (now - prev.timestamp > 180000);
 
         if (moved) {
@@ -63,7 +63,7 @@ io.on('connection', (socket) => {
 // PORT CONFIGURATION
 const PORT = 3000;
 
-// Listen on 0.0.0.0 to make it accessible on the local network (Portable Mode)
+//Portable Mode
 http.listen(PORT, '0.0.0.0', () => {
     console.log("\n==========================================");
     console.log("   ECOROUTE SYSTEM STARTED SUCCESSFULLY   ");
@@ -72,4 +72,5 @@ http.listen(PORT, '0.0.0.0', () => {
     console.log(`> Network Access: Use your IP address`);
     console.log(`> Status: Server is active and listening...`);
     console.log("==========================================\n");
+
 });
