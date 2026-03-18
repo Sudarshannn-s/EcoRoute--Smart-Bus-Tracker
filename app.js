@@ -3,23 +3,34 @@ const app = express();
 const http = require('http').createServer(app);
 const io = require('socket.io')(http);
 
-//Frontend files
 app.use(express.static('public'));
 
-// Storage for bus tracking logs
 const busLogs = {}; 
+// The secret key for drivers
+const SECURITY_KEY = "4578"; 
 
 io.on('connection', (socket) => {
     console.log('New Device Linked: ' + socket.id);
+    socket.isAuthorized = false; // Default to unauthorized
 
-    // Instant Status & Capacity Update Logic
+    // Handle authentication request
+    socket.on('verify-driver', (key) => {
+        if (key === SECURITY_KEY) {
+            socket.isAuthorized = true;
+            socket.emit('auth-success');
+            console.log(`Driver Authorized: ${socket.id}`);
+        } else {
+            socket.emit('auth-failure', "Incorrect Security Key!");
+        }
+    });
+
     socket.on('report-occupancy', (data) => {
-        // Store status and visual data on the socket object
+        if (!socket.isAuthorized) return; // Block unauthorized data
+
         socket.occupancyStatus = data.status;
         socket.occupancyPercent = data.percent;
         socket.occupancyColor = data.color;
 
-        // Broadcast the update to everyone immediately
         io.emit('status-updated', { 
             id: socket.id, 
             status: data.status,
@@ -28,15 +39,12 @@ io.on('connection', (socket) => {
         });
     });
 
-    // Real-Time Location & Traffic Analysis
     socket.on('send-location', (data) => {
+        if (!socket.isAuthorized) return; // Block unauthorized data
+
         const now = Date.now();
         const prev = busLogs[socket.id] || { latitude: data.latitude, longitude: data.longitude, timestamp: now };
-        
-        // To Check if moved significantly (approx 10 meters)
         const moved = Math.abs(data.latitude - prev.latitude) > 0.0001 || Math.abs(data.longitude - prev.longitude) > 0.0001;
-        
-        // If No movement for 3 minutes
         const isStuck = !moved && (now - prev.timestamp > 180000);
 
         if (moved) {
@@ -49,6 +57,7 @@ io.on('connection', (socket) => {
             percent: socket.occupancyPercent || 10,
             color: socket.occupancyColor || "#2ecc71",
             isStuck: isStuck,
+            role: 'driver', // Ensure receivers know this is a verified driver
             ...data 
         });
     });
@@ -60,17 +69,8 @@ io.on('connection', (socket) => {
     });
 });
 
-// PORT CONFIGURATION
 const PORT = 3000;
-
-//Portable Mode
 http.listen(PORT, '0.0.0.0', () => {
-    console.log("\n==========================================");
-    console.log("   ECOROUTE SYSTEM STARTED SUCCESSFULLY   ");
-    console.log("==========================================");
-    console.log(`> Local Access: http://localhost:${PORT}`);
-    console.log(`> Network Access: Use your IP address`);
-    console.log(`> Status: Server is active and listening...`);
-    console.log("==========================================\n");
-
+    console.log(`\n> ECOROUTE ACTIVE: http://localhost:${PORT}`);
+    console.log(`> DRIVER KEY SET TO: ${SECURITY_KEY}\n`);
 });
